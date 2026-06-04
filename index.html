@@ -194,8 +194,8 @@
     </div>
 
     <script>
-    const SMOKER_API_URL = '1z7-R_HtPIy9QNNkVtFsrpKC2kW5iOTT7kRewyxrzOdM';
-    const BOOTH_API_URL  = '1Cenf4nRN9REMtDSxaTKIUG99g0DB73btYNocJ4VJKRw';
+    const SMOKER_API_URL = 'https://script.google.com/macros/s/AKfycbzcFJgRFTPX7WZsCs_sSI5-PDauKbUtLdhV1OkWTtf_8WtC4ClQpdnOeDJ27ltBEduR6w/exec';
+    const BOOTH_API_URL  = 'https://script.google.com/macros/s/AKfycbwcTRaebNnahXNglzvE5EiHLaC8CdUELOudmqafTMepjgGNXL7ooZrA7RAoZl2afEfPsw/exec';
 
     let smokerCount = 0;
     let boothCount  = 0;
@@ -203,13 +203,11 @@
     function animateCount(elementId, from, to) {
         const el = document.getElementById(elementId);
         if (from === to) { el.textContent = to; return; }
-
         const duration = 600;
         const start = performance.now();
-
         function step(now) {
             const progress = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
             el.textContent = Math.round(from + (to - from) * eased);
             if (progress < 1) requestAnimationFrame(step);
         }
@@ -241,7 +239,6 @@
                 fetchCount(SMOKER_API_URL),
                 fetchCount(BOOTH_API_URL)
             ]);
-
             if (newSmoker !== smokerCount) {
                 animateCount('smoker-count', smokerCount, newSmoker);
                 smokerCount = newSmoker;
@@ -250,7 +247,6 @@
                 animateCount('booth-count', boothCount, newBooth);
                 boothCount = newBooth;
             }
-
             setStatus(true);
         } catch (e) {
             console.error('데이터 로드 실패:', e);
@@ -258,7 +254,6 @@
         }
     }
 
-    // 페이지 로드 즉시 실행 + 10초마다 갱신
     fetchData();
     setInterval(fetchData, 10000);
 </script>
