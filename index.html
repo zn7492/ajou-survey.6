@@ -52,68 +52,80 @@
     </div>
 
     <script>
-        const SMOKER_API_URL = 'https://script.google.com/macros/s/AKfycbw363IcEW_lKAvAnkkRqLx_eHuFEhMiZ78G50H8hxZuShx_nb0l-zsN29W3W2aMjYD8rQ/exec';
-        const BOOTH_API_URL  = 'https://script.google.com/macros/s/AKfycbxXo_nRoM2gFagI1eB_I0lb6E6CtbrlFC1G8nB5N2DH5CJuSv6y5rSxZbcJgQ4MzgS0xw/exec';
+    const SMOKER_API_URL = 'https://script.google.com/macros/s/AKfycbzWrcc0ln93L_YQpnP9NVdZHkmCblhjobDFsjxoWxKE6cxpbYK8nECbPmvO1mi9IahuKA/exec';
+    const BOOTH_API_URL  = 'https://script.google.com/macros/s/AKfycbw2bqzEOM8QI17hy8vSJO5XHGQX1tTEpWiyNyHz_rJA6lfc36GC2KDyxjIUuy7zmjXthQ/exec';
 
-        let smokerCount = 0;
-        let boothCount  = 0;
+    let smokerCount = 0;
+    let boothCount  = 0;
 
-        function animateCount(elementId, from, to) {
-            const el = document.getElementById(elementId);
-            if (from === to) { el.textContent = to; return; }
-            const duration = 600;
-            const start = performance.now();
-            function step(now) {
-                const progress = Math.min((now - start) / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3);
-                el.textContent = Math.round(from + (to - from) * eased);
-                if (progress < 1) requestAnimationFrame(step);
+    function animateCount(elementId, from, to) {
+        const el = document.getElementById(elementId);
+        if (from === to) { el.textContent = to; return; }
+        const duration = 600;
+        const start = performance.now();
+        function step(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(from + (to - from) * eased);
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    function setStatus(ok) {
+        const el = document.getElementById('status-text');
+        const dot = document.querySelector('.status-dot');
+        if (ok) {
+            el.textContent = '실시간 연결됨 · ' + new Date().toLocaleTimeString('ko-KR');
+            dot.style.backgroundColor = '#1a936f';
+        } else {
+            el.textContent = '연결 오류 · 재시도 중...';
+            dot.style.backgroundColor = '#e0533c';
+        }
+    }
+
+    function fetchJSONP(url, callbackName) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            window[callbackName] = function(data) {
+                resolve(data);
+                delete window[callbackName];
+                document.body.removeChild(script);
+            };
+            script.src = url + '?callback=' + callbackName;
+            script.onerror = reject;
+            document.body.appendChild(script);
+        });
+    }
+
+    async function fetchData() {
+        try {
+            const [smokerData, boothData] = await Promise.all([
+                fetchJSONP(SMOKER_API_URL, 'cb_smoker'),
+                fetchJSONP(BOOTH_API_URL, 'cb_booth')
+            ]);
+
+            const newSmoker = Number(smokerData.count) || 0;
+            const newBooth  = Number(boothData.count)  || 0;
+
+            if (newSmoker !== smokerCount) {
+                animateCount('smoker-count', smokerCount, newSmoker);
+                smokerCount = newSmoker;
             }
-            requestAnimationFrame(step);
-        }
-
-        function setStatus(ok) {
-            const el = document.getElementById('status-text');
-            const dot = document.querySelector('.status-dot');
-            if (ok) {
-                el.textContent = '실시간 연결됨 · ' + new Date().toLocaleTimeString('ko-KR');
-                dot.style.backgroundColor = '#1a936f';
-            } else {
-                el.textContent = '연결 오류 · 재시도 중...';
-                dot.style.backgroundColor = '#e0533c';
+            if (newBooth !== boothCount) {
+                animateCount('booth-count', boothCount, newBooth);
+                boothCount = newBooth;
             }
-        }
 
-        async function fetchCount(url) {
-            const res = await fetch(url, { cache: 'no-store' });
-            if (!res.ok) throw new Error('fetch failed');
-            const json = await res.json();
-            return Number(json.count) || 0;
+            setStatus(true);
+        } catch (e) {
+            console.error('데이터 로드 실패:', e);
+            setStatus(false);
         }
+    }
 
-        async function fetchData() {
-            try {
-                const [newSmoker, newBooth] = await Promise.all([
-                    fetchCount(SMOKER_API_URL),
-                    fetchCount(BOOTH_API_URL)
-                ]);
-                if (newSmoker !== smokerCount) {
-                    animateCount('smoker-count', smokerCount, newSmoker);
-                    smokerCount = newSmoker;
-                }
-                if (newBooth !== boothCount) {
-                    animateCount('booth-count', boothCount, newBooth);
-                    boothCount = newBooth;
-                }
-                setStatus(true);
-            } catch (e) {
-                console.error('데이터 로드 실패:', e);
-                setStatus(false);
-            }
-        }
-
-        fetchData();
-        setInterval(fetchData, 10000);
-    </script>
+    fetchData();
+    setInterval(fetchData, 10000);
+</script>
 </body>
 </html>
