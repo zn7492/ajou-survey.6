@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아주대 흡연구역 개선 실시간 설문 현황</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f7f6f2;
+            color: #333333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #111111;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #111111;
+            line-height: 1.3;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 14px;
+            padding: 32px 24px;
+            text-align: center;
+            border: 1px solid #eef0f2;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            border-top-left-radius: 14px;
+            border-top-right-radius: 14px;
+        }
+
+        .card.smoker::before {
+            background-color: #e0533c;
+        }
+
+        .card.booth::before {
+            background-color: #1a936f;
+        }
+
+        .card-title {
+            font-size: 15px;
+            color: #555555;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .count-wrapper {
+            margin-bottom: 16px;
+        }
+
+        .count {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .card.smoker .count {
+            color: #e0533c;
+        }
+
+        .card.booth .count {
+            color: #1a936f;
+        }
+
+        .card-footer {
+            font-size: 14px;
+            color: #666666;
+            font-weight: 500;
+        }
+
+        /* Subtle loading animation or indicator */
+        .status-bar {
+            text-align: right;
+            font-size: 12px;
+            color: #999999;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #1a936f;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="badge">아주상상프로젝트 6조 육개장</div>
+        <h1>아주대 흡연구역 개선<br>실시간 설문 현황</h1>
+        <p class="subtitle">전시 기간 동안 수집된 설문 응답이 실시간으로 반영됩니다.<br>아래 QR을 통해 설문에 참여해주세요.</p>
+
+        <div class="dashboard">
+            <!-- 흡연자 설문 참여 인원 -->
+            <div class="card smoker">
+                <div class="card-title">흡연자 설문<br>참여 인원</div>
+                <div class="count-wrapper">
+                    <span id="smoker-count" class="count">0</span>
+                </div>
+                <div class="card-footer">명이 의견을 남겼습니다</div>
+            </div>
+
+            <!-- 흡연부스 설치 동의 인원 -->
+            <div class="card booth">
+                <div class="card-title">흡연부스 설치<br>동의 인원</div>
+                <div class="count-wrapper">
+                    <span id="booth-count" class="count">0</span>
+                </div>
+                <div class="card-footer">명이 동의했습니다</div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span class="status-dot"></span>
+            <span id="status-text">실시간 연결 중...</span>
+        </div>
+    </div>
+
+    <script>
+        // 이 부분에 본인의 구글 스프레드시트 API 주소 또는 웹 앱 URL을 연동하시면 됩니다.
+        // 안내 텍스트에 따라 설정 후 아래 SPREADSHEET_ID를 변경하여 연동할 수 있도록 구조를 짜두었습니다.
+        
+        const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; 
+        
+        // 실시간 업데이트 예시 (실제 연동 전 테스트용 애니메이션 또는 데이터 로드 함수)
+        // 실제 연동 코드는 대화창에 전달해 드리는 스크립트를 참조하여 적용할 수 있습니다.
+        function fetchData() {
+            // 외부 가이드에 따라 실제 구글 시트 데이터를 가져오는 fetch API가 들어가는 자리입니다.
+            console.log("실시간 데이터를 확인하는 중...");
+        }
+
+        // 초기 실행 및 주기적 반복 (실제 연동 시 사용)
+        setInterval(fetchData, 10000); // 10초마다 갱신
+    </script>
+</body>
+</html>
